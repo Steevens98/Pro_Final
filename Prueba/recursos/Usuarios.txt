@@ -1,0 +1,6 @@
+persona,151106,David,Vera,0987123456,1990/03/15,david.vera@mail.com,Ecuador
+persona,156936,Maria,Lopez,0999988777,1985/07/22,maria.lopez@gmail.com,Colombia
+persona,427905,Juan,Perez,0987564321,1992/11/08,juan.perez@yahoo.com,Perú
+empresa,386714,TechCorp,0234567890,contacto@techcorp.com,Ecuador,Tecnología,Av. Amazonas 123
+empresa,789908,Ferretería El Tornillo,0287654321,ventas@eltornillo.com,Colombia,Construcción,Calle 8 #12-34
+empresa,943277,AgroVida,0277889900,info@agrovida.pe,Perú,Agricultura,Carretera Central Km 24
