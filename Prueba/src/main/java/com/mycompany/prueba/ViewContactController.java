@@ -25,15 +25,19 @@ import java.util.Comparator;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -41,6 +45,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 /**
  * FXML Controller class
@@ -65,6 +70,9 @@ public class ViewContactController implements Initializable {
     @FXML
     private Button btnFiltrar;
     
+    private HBox hboxAsociar;
+    private ComboBox<Contacto> comboContactosAsociar = new ComboBox<>();
+    private Button btnAsociar = new Button("Asociar contacto");
     private Button btnSeleccionarImagen = new Button("Seleccionar Imagen");
     private ImageView imgFoto;    
     private File archivoImagenSeleccionada;
@@ -88,6 +96,7 @@ public class ViewContactController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         listaContactos = Contacto.cargarContactos();
         Contacto.cargarFotos(listaContactos);
+        Contacto.cargarContactosAsociados(listaContactos);
         if (!listaContactos.estaVacia()) {
             System.out.println("Contactos cargados exitosamente:");
             listaContactos.mostrarAdelante(); 
@@ -110,6 +119,20 @@ public class ViewContactController implements Initializable {
         btnFotoAnterior.setOnAction(e -> mostrarFotoAnterior());
         btnOrdenar.setOnAction(e -> ordenar());
         btnFiltrar.setOnAction(e -> filtrarContactos());
+        btnAsociar.setOnAction(e -> {
+        Contacto seleccionado = comboContactosAsociar.getValue();
+            if (seleccionado != null && nodoActual != null) {
+                // Evita duplicados
+                if (!nodoActual.dato.getContactosAsociados().contiene(seleccionado)) {
+                    nodoActual.dato.agregarContactoAsociado(seleccionado);
+                    guardarAsociadosArchivo(nodoActual.dato, seleccionado);
+                    mostrarMensaje("Contacto asociado correctamente: " + seleccionado.getNombre());
+                } else {
+                    mostrarMensaje("Este contacto ya está asociado.");
+                }
+            }
+        });
+        comboContactosAsociar.setPromptText("Selecciona un contacto");
     }
     
     private void ordenar() {
@@ -162,8 +185,20 @@ public class ViewContactController implements Initializable {
                 nodoFoto = nodoFoto.siguiente;
             } while (nodoFoto != fotos.cabeza);
         }
+        
+        ListaDobleCircular<Contacto> asociados = nodoActual.dato.getContactosAsociados();
+        if (asociados == null || asociados.estaVacia()) {
+            System.out.println("Este contacto no tiene contactos asociados.");
+        } else {
+            System.out.println("Contactos asociados:");
+            NodoDobleCircular<Contacto> nodoAsociado = asociados.cabeza;
+            do {
+                System.out.println("  - " + nodoAsociado.dato.getNombre());
+                nodoAsociado = nodoAsociado.siguiente;
+            } while (nodoAsociado != asociados.cabeza);
+        }
         vboxContactos.getChildren().clear();
-
+        
         VBox contenedor = new VBox(10);
         contenedor.setAlignment(Pos.CENTER);
         contenedor.setPadding(new Insets(10));
@@ -204,6 +239,11 @@ public class ViewContactController implements Initializable {
             contenedor.getChildren().add(crearVistaEmpresa(em));
         }    
         vboxContactos.getChildren().add(contenedor);
+        cargarContactosParaAsociar(); 
+        hboxAsociar = new HBox(10, comboContactosAsociar, btnAsociar);
+        hboxAsociar.setAlignment(Pos.CENTER);
+        contenedor.getChildren().add(hboxAsociar);
+        hboxAsociar.setVisible(false);
     }
     
     private void cargarImagen(String rutaRelativa) {
@@ -231,6 +271,7 @@ public class ViewContactController implements Initializable {
                 campo.setDisable(true);
             }
             btnSeleccionarImagen.setVisible(false);
+            if (hboxAsociar != null) hboxAsociar.setVisible(false);
             btnEditar.setText("Editar");
             modoEdicion = false;
         } else {
@@ -239,9 +280,60 @@ public class ViewContactController implements Initializable {
                 campo.setDisable(false);
             }
             btnSeleccionarImagen.setVisible(true);
+            if (hboxAsociar != null) hboxAsociar.setVisible(true);
             btnEditar.setText("Guardar");
             modoEdicion = true;
         }
+    }
+    
+    
+    
+    private void guardarAsociadosArchivo(Contacto dueño, Contacto asociado) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("recursos/usuariosAsociados.txt", true))) {
+            bw.write(dueño.getId() + "," + asociado.getId());
+            bw.newLine();
+        } catch (IOException e) {
+            mostrarMensaje("Error al guardar asociación: " + e.getMessage());
+        }
+    }
+    
+    private void cargarContactosParaAsociar() {
+        comboContactosAsociar.getItems().clear();
+
+        if (!listaContactos.estaVacia()) {
+            NodoDobleCircular<Contacto> actual = listaContactos.cabeza;
+            do {
+                // Agrega todos menos el contacto actual (nodoActual)
+                if (!actual.dato.getId().equals(nodoActual.dato.getId())) {
+                    comboContactosAsociar.getItems().add(actual.dato);
+                }
+                actual = actual.siguiente;
+            } while (actual != listaContactos.cabeza);
+        }
+
+        // Establece la forma en que se muestra cada item (nombre + id)
+        comboContactosAsociar.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Contacto item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (ID: " + item.getId() + ")");
+                }
+            }
+        });
+        comboContactosAsociar.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Contacto item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (ID: " + item.getId() + ")");
+                }
+            }
+        });
     }
     
     private void seleccionarImagen() {
@@ -494,9 +586,10 @@ public class ViewContactController implements Initializable {
             filtro = c -> c instanceof Empresa;
         } else if (entrada.equals("persona")) {
             filtro = c -> c instanceof PersonaNatural;
-        }
+        } 
          else {
-            filtro = c -> c.getPais().equalsIgnoreCase(entrada);
+            filtro = c -> c.getNombre().toLowerCase().contains(entrada.toLowerCase()) ||
+                     (c.getPais() != null && c.getPais().toLowerCase().contains(entrada));
         }
 
         listaFiltrada = new ListaDobleCircular<>();
@@ -523,5 +616,30 @@ public class ViewContactController implements Initializable {
     @FXML
     private void switchCancelar() throws IOException {
         App.setRoot("mainView");
+    }
+    
+    @FXML
+    private void verContactosAsociados() {
+        try {
+            // Cargar FXML de la vista de asociados
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/prueba/asociadosView.fxml"));
+            Parent root = loader.load();
+
+            // Obtener el controlador y pasarle la lista de asociados del contacto actual
+            AsociadosViewController controlador = loader.getController();
+            if (nodoActual != null && nodoActual.dato != null) {
+                ListaDobleCircular<Contacto> asociados = nodoActual.dato.getContactosAsociados();
+                controlador.setContactosAsociados(asociados);
+            }
+
+            // Mostrar en nueva ventana
+            Stage stage = new Stage();
+            stage.setTitle("Contactos Asociados");
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

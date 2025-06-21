@@ -150,6 +150,30 @@ public class ListaDobleCircular<T> {
         } while (cambio);
     }
     
+    public boolean contiene(T elemento) {
+        if (estaVacia()) {
+            return false;
+        }
+
+        NodoDobleCircular<T> actual = cabeza;
+        do {
+            if (elemento instanceof Contacto && actual.dato instanceof Contacto) {
+                Contacto c1 = (Contacto) actual.dato;
+                Contacto c2 = (Contacto) elemento;
+                if (c1.getId().equals(c2.getId())) {
+                    return true;
+                }
+            } else {
+                if (actual.dato.equals(elemento)) {
+                    return true;
+                }
+            }
+            actual = actual.siguiente;
+        } while (actual != cabeza);
+
+        return false;
+    }
+    
 }
 
 

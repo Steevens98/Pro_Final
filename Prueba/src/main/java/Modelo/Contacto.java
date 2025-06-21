@@ -19,6 +19,7 @@ public abstract class Contacto {
     private String pais;
     private final String id;
     private ListaDobleCircular<Foto> fotos = new ListaDobleCircular<>();
+    private ListaDobleCircular<Contacto> asociados = new ListaDobleCircular<>();
 
     public Contacto(String id, String nombre, String telefono, String email, String pais) {
         this.id = id;
@@ -227,5 +228,53 @@ public abstract class Contacto {
         } catch (IOException e) {
             System.out.println("Error al cargar fotos: " + e.getMessage());
         }
+    }
+    
+    public void agregarContactoAsociado(Contacto c) {
+        asociados.agregar(c);
+    }
+
+    public ListaDobleCircular<Contacto> getContactosAsociados() {
+        return asociados;
+    }
+    
+    
+    public static void cargarContactosAsociados(ListaDobleCircular<Contacto> listaContactos) {
+        try (BufferedReader br = new BufferedReader(new FileReader("recursos/usuariosAsociados.txt"))) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                String[] partes = linea.split(",");
+                if (partes.length == 2) {
+                    String idDueño = partes[0];
+                    String idAsociado = partes[1];
+
+                    Contacto dueño = buscarPorId(listaContactos, idDueño);
+                    Contacto asociado = buscarPorId(listaContactos, idAsociado);
+
+                    if (dueño != null && asociado != null) {
+                        dueño.agregarContactoAsociado(asociado);
+                        System.out.println("El Contacto: " + asociado.getNombre() + " esta asociado al Contacto " + dueño.getNombre());
+                    } else {
+                        System.out.println("Asociación fallida: No se encontró algún contacto para IDs: " + idDueño + ", " + idAsociado);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error leyendo archivo de asociados: " + e.getMessage());
+        }
+    }
+    
+    public static Contacto buscarPorId(ListaDobleCircular<Contacto> lista, String id) {
+        if (lista.estaVacia()) {
+            return null;
+        }
+        NodoDobleCircular<Contacto> actual = lista.cabeza;
+        do {
+            if (actual.dato.getId().equals(id)) {
+                return actual.dato;
+            }
+            actual = actual.siguiente;
+        } while (actual != lista.cabeza);
+        return null;
     }
 }

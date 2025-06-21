@@ -2,15 +2,12 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane id="AnchorPane" prefHeight="400.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.prueba.ViewContactController">
-    
+<BorderPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.mycompany.prueba.AsociadosViewController">
     <center>
         <VBox alignment="CENTER" prefHeight="308.0" prefWidth="619.0" spacing="10">
             <HBox alignment="CENTER" spacing="10">
@@ -29,11 +26,7 @@
                 <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
             <Button fx:id="btnAtras" text="Atrás" />
-            <Button fx:id="btnEditar" text="Editar" />
-            <Button fx:id="btnEliminar" onAction="#eliminarContacto" text="Eliminar" />
             <Button fx:id="btnSiguiente" text="Siguiente" />
-            <Button fx:id="btnCancelar" onAction="#switchCancelar" text="Cancelar" />
-         <Button fx:id="btnVerAsociados" mnemonicParsing="false" onAction="#verContactosAsociados" text="Ver Contactos asociados" />
          <BorderPane.margin>
             <Insets bottom="3.0" />
          </BorderPane.margin>
@@ -42,27 +35,11 @@
    <top>
       <HBox prefHeight="34.0" prefWidth="590.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField fx:id="txtFiltro" promptText="Filtrar por: ">
-               <HBox.margin>
-                  <Insets left="5.0" />
-               </HBox.margin>
-            </TextField>
-            <Button fx:id="btnFiltrar" mnemonicParsing="false" onAction="#filtrarContactos" text="Filtrar">
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin>
-            </Button>
             <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Vista de Contacto">
                <HBox.margin>
-                  <Insets left="30.0" right="35.0" />
+                  <Insets left="225.0" />
                </HBox.margin>
             </Label>
-            <ComboBox fx:id="comboOrdenar" prefHeight="25.0" prefWidth="110.0" promptText="Ordenar por" />
-            <Button fx:id="btnOrdenar" mnemonicParsing="false" text="Ordenar">
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin>
-            </Button>
          </children>
          <BorderPane.margin>
             <Insets left="10.0" top="10.0" />
