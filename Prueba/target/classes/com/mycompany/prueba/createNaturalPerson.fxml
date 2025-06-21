@@ -83,7 +83,7 @@
                     <Insets bottom="20" left="10" right="20" top="10" />
                 </padding>
                 <Button fx:id="btnAceptar" onAction="#guardarEnArchivo" text="Aceptar" />
-                <Button fx:id="btnCancelar" onAction="#SwitchAtras" text="Cancelar" />
+                <Button fx:id="btnCancelar" onAction="#SwitchCancelar" text="Cancelar" />
             </HBox>
         </bottom>
       <top>

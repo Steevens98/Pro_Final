@@ -19,16 +19,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-//        ListaDobleCircular<Contacto> contactos = Contacto.cargarContactos();
-//
-//        // Verificar que se hayan cargado correctamente (impresión opcional)
-//        if (!contactos.estaVacia()) {
-//            System.out.println("Contactos cargados exitosamente:");
-//            contactos.mostrarAdelante(); // Asumiendo que tienes un método imprimir en ListaDobleCircular
-//        } else {
-//            System.out.println("No se encontraron contactos.");
-//        }
-        scene = new Scene(loadFXML("mainView"), 640, 480);
+        scene = new Scene(loadFXML("mainView"), 640, 510);
         stage.setScene(scene);
         stage.show();
     }

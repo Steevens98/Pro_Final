@@ -153,7 +153,7 @@ public class CreateNaturalPersonController{
     }
 
     @FXML
-    private void SwitchAtras() throws IOException {
+    private void SwitchCancelar() throws IOException {
         App.setRoot("createContact");
     }   
     

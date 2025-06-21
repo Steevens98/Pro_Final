@@ -35,8 +35,9 @@
             </padding>
             <Button fx:id="btnAtras" text="Atrás" />
             <Button fx:id="btnEditar" text="Editar" />
+            <Button fx:id="btnEliminar" text="Eliminar" onAction="#eliminarContacto"/>
             <Button fx:id="btnSiguiente" text="Siguiente" />
-            <Button fx:id="btnAtras2" onAction="#switchAtras" text="Atrás" />
+            <Button fx:id="btnCancelar" onAction="#switchCancelar" text="Cancelar" />
         </HBox>
     </bottom>
 </BorderPane>

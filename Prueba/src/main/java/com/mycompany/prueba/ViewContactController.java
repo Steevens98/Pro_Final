@@ -11,9 +11,15 @@ import Modelo.Foto;
 import Modelo.ListaDobleCircular;
 import Modelo.NodoDobleCircular;
 import Modelo.PersonaNatural;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
@@ -21,6 +27,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -30,6 +37,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 /**
  * FXML Controller class
@@ -43,8 +51,12 @@ public class ViewContactController implements Initializable {
     private Button btnSiguiente, btnAtras, btnEditar;
     @FXML
     private Button btnFotoSiguiente, btnFotoAnterior;
-
+    @FXML
+    private Button btnEliminar;
+    
+    private Button btnSeleccionarImagen = new Button("Seleccionar Imagen");
     private ImageView imgFoto;    
+    private File archivoImagenSeleccionada;
     private ListaDobleCircular<Contacto> listaContactos;
     private NodoDobleCircular<Contacto> nodoActual;
     private NodoDobleCircular<Foto> nodoFotoActual;
@@ -56,6 +68,7 @@ public class ViewContactController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        
         listaContactos = Contacto.cargarContactos();
         Contacto.cargarFotos(listaContactos);
         if (!listaContactos.estaVacia()) {
@@ -69,10 +82,12 @@ public class ViewContactController implements Initializable {
             mostrarContacto(nodoActual.dato);
         }
         vboxContactos.setAlignment(Pos.CENTER);
-
+        btnSeleccionarImagen.setVisible(false);
+        btnSeleccionarImagen.setOnAction(e -> seleccionarImagen());
         btnSiguiente.setOnAction(e -> siguienteContacto());
         btnAtras.setOnAction(e -> anteriorContacto());
         btnEditar.setOnAction(e -> alternarModoEdicion());
+        btnEliminar.setOnAction(e -> eliminarContacto());
         btnFotoSiguiente.setOnAction(e -> mostrarFotoSiguiente());
         btnFotoAnterior.setOnAction(e -> mostrarFotoAnterior());
     }
@@ -126,6 +141,9 @@ public class ViewContactController implements Initializable {
         // Imagen + flechas laterales
         HBox hboxImagen = new HBox(10);
         hboxImagen.setAlignment(Pos.CENTER);
+        
+        VBox vboxImagenYBoton = new VBox(5);
+        vboxImagenYBoton.setAlignment(Pos.CENTER);
 
         Button btnIzquierda = btnFotoAnterior;
         Button btnDerecha = btnFotoSiguiente;
@@ -144,8 +162,8 @@ public class ViewContactController implements Initializable {
             cargarImagen(rutaDefault);
             nodoFotoActual = null;
         }
-
-        hboxImagen.getChildren().addAll(btnIzquierda, imgFoto, btnDerecha);
+        vboxImagenYBoton.getChildren().addAll(imgFoto, btnSeleccionarImagen);
+        hboxImagen.getChildren().addAll(btnIzquierda, vboxImagenYBoton, btnDerecha);
         contenedor.getChildren().add(hboxImagen);
         
         if (contacto instanceof PersonaNatural) {
@@ -196,6 +214,7 @@ public class ViewContactController implements Initializable {
             for (TextField campo : camposActuales) {
                 campo.setDisable(true);
             }
+            btnSeleccionarImagen.setVisible(false);
             btnEditar.setText("Editar");
             modoEdicion = false;
         } else {
@@ -203,8 +222,24 @@ public class ViewContactController implements Initializable {
             for (TextField campo : camposActuales) {
                 campo.setDisable(false);
             }
+            btnSeleccionarImagen.setVisible(true);
             btnEditar.setText("Guardar");
             modoEdicion = true;
+        }
+    }
+    
+    private void seleccionarImagen() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar imagen");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg")
+        );
+
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            archivoImagenSeleccionada = file;
+            Image image = new Image(file.toURI().toString());
+            imgFoto.setImage(image);
         }
     }
     
@@ -228,6 +263,49 @@ public class ViewContactController implements Initializable {
             e.setRubro(camposActuales.get(4).getText());
             e.setDireccion(camposActuales.get(5).getText());
         }
+        
+        // Si se seleccionó una nueva imagen, copiarla y guardar referencia
+        if (archivoImagenSeleccionada != null) {
+            File carpetaImagenes = new File("imagenes/");
+            if (!carpetaImagenes.exists()) {
+                carpetaImagenes.mkdirs();
+            }
+
+            String nombreOriginal = archivoImagenSeleccionada.getName();
+            File destino = new File(carpetaImagenes, nombreOriginal);
+
+            int contador = 1;
+            String nombreSinExtension = nombreOriginal.substring(0, nombreOriginal.lastIndexOf('.'));
+            String extension = nombreOriginal.substring(nombreOriginal.lastIndexOf('.'));
+
+            while (destino.exists()) {
+                String nuevoNombre = nombreSinExtension + "_" + contador + extension;
+                destino = new File(carpetaImagenes, nuevoNombre);
+                contador++;
+            }
+
+            try {
+                Files.copy(archivoImagenSeleccionada.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                // Agregar foto al contacto en memoria
+                Foto foto = new Foto("imagenes/" + destino.getName(), LocalDate.now());
+                c.agregarFoto(foto);
+
+                // Guardar archivo imagenes.txt
+                try (BufferedWriter fotoWriter = new BufferedWriter(new FileWriter("recursos/imagenes.txt", true))) {
+                    String rutaRelativa = "imagenes/" + destino.getName();
+                    String fechaHoy = LocalDate.now().toString();
+                    fotoWriter.write(c.getId() + "," + rutaRelativa + "," + fechaHoy + System.lineSeparator());
+                }
+
+                // Limpiar la selección para no volver a guardar la misma imagen
+                archivoImagenSeleccionada = null;
+
+            } catch (IOException ex) {
+                System.out.println("Error al copiar la imagen: " + ex.getMessage());
+            }
+        }
+        
         System.out.println("Cambios guardados: " + c);
         Contacto.guardarContactosEnArchivo(listaContactos);
         Contacto.guardarFotosEnArchivo(listaContactos);
@@ -280,8 +358,83 @@ public class ViewContactController implements Initializable {
         return field;
     }
     
+    
     @FXML
-    private void switchAtras() throws IOException {
+    private void eliminarContacto() {
+        if (listaContactos.estaVacia() || nodoActual == null) {
+            mostrarMensaje("No hay contactos para eliminar.");
+            return;
+        }
+
+        Contacto contactoAEliminar = nodoActual.dato;
+
+        // Eliminar del archivo usuarios.txt
+        File archivoOriginal = new File("recursos/usuarios.txt");
+        File archivoTemporal = new File("recursos/usuarios_temp.txt");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(archivoOriginal)); BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTemporal))) {
+
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (!linea.contains(contactoAEliminar.getId())) {
+                    writer.write(linea);
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            mostrarMensaje("Error al eliminar del archivo usuarios.txt: " + e.getMessage());
+            return;
+        }
+
+        archivoOriginal.delete();
+        archivoTemporal.renameTo(archivoOriginal);
+
+        // Eliminar entradas del archivo imagenes.txt
+        File archivoFotos = new File("recursos/imagenes.txt");
+        File archivoFotosTemp = new File("recursos/imagenes_temp.txt");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(archivoFotos)); BufferedWriter writer = new BufferedWriter(new FileWriter(archivoFotosTemp))) {
+
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (!linea.startsWith(contactoAEliminar.getId() + ",")) {
+                    writer.write(linea);
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            mostrarMensaje("Error al eliminar fotos del archivo imagenes.txt: " + e.getMessage());
+            return;
+        }
+
+        archivoFotos.delete();
+        archivoFotosTemp.renameTo(archivoFotos);
+
+        // Eliminar del sistema (de la lista en memoria)
+        listaContactos.eliminar(contactoAEliminar);
+
+        mostrarMensaje("Contacto eliminado correctamente.");
+
+        // Mostrar siguiente o mensaje si ya no hay contactos
+        if (!listaContactos.estaVacia()) {
+            nodoActual = listaContactos.cabeza;
+            mostrarContacto(nodoActual.dato);
+        } else {
+            vboxContactos.getChildren().clear();
+            mostrarMensaje("No hay más contactos.");
+        }
+    }
+    
+    private void mostrarMensaje(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Información");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+    
+    @FXML
+    private void switchCancelar() throws IOException {
         App.setRoot("mainView");
     }
 }
