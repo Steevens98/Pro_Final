@@ -131,7 +131,6 @@ public class ListaDobleCircular<T> {
         if (cabeza == null || cabeza.siguiente == cabeza) {
             return; // lista vacía o un nodo
         }
-        System.out.println("Ejecutando ordenamiento"+ comparador); 
         boolean cambio;
         do {
             cambio = false;

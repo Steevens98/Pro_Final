@@ -23,6 +23,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -59,6 +60,10 @@ public class ViewContactController implements Initializable {
     private ComboBox<String> comboOrdenar;
     @FXML
     private Button btnOrdenar;
+    @FXML
+    private TextField txtFiltro;
+    @FXML
+    private Button btnFiltrar;
     
     private Button btnSeleccionarImagen = new Button("Seleccionar Imagen");
     private ImageView imgFoto;    
@@ -66,6 +71,7 @@ public class ViewContactController implements Initializable {
     private ListaDobleCircular<Contacto> listaContactos;
     private NodoDobleCircular<Contacto> nodoActual;
     private NodoDobleCircular<Foto> nodoFotoActual;
+    private ListaDobleCircular<Contacto> listaFiltrada; 
     private boolean modoEdicion = false;
     private ArrayList<TextField> camposActuales = new ArrayList<>(10);
     private Comparator<Contacto> comparadorPorNombre = Comparator.comparing(
@@ -103,6 +109,7 @@ public class ViewContactController implements Initializable {
         btnFotoSiguiente.setOnAction(e -> mostrarFotoSiguiente());
         btnFotoAnterior.setOnAction(e -> mostrarFotoAnterior());
         btnOrdenar.setOnAction(e -> ordenar());
+        btnFiltrar.setOnAction(e -> filtrarContactos());
     }
     
     private void ordenar() {
@@ -462,6 +469,55 @@ public class ViewContactController implements Initializable {
         listaContactos.ordenarPor(comparador);
         nodoActual = listaContactos.cabeza;
         mostrarContacto(nodoActual.dato);
+    }
+    
+    
+    @FXML
+    private void filtrarContactos() {
+        String entrada = txtFiltro.getText().trim().toLowerCase();
+
+        if (entrada.isBlank()) {
+            // Si el usuario borra el filtro, vuelve a mostrar toda la lista original
+            listaFiltrada = null;  // o usa listaContactos directamente
+            nodoActual = listaContactos.cabeza;
+            mostrarContacto(nodoActual.dato);
+            mostrarMensaje("Mostrando todos los contactos.");
+        } else {
+            aplicarFiltro(entrada);  // llama al método privado que tú tienes
+        }
+    }
+    
+    private void aplicarFiltro(String entrada) {
+        Predicate<Contacto> filtro;
+
+        if (entrada.equals("empresa")) {
+            filtro = c -> c instanceof Empresa;
+        } else if (entrada.equals("persona")) {
+            filtro = c -> c instanceof PersonaNatural;
+        }
+         else {
+            filtro = c -> c.getPais().equalsIgnoreCase(entrada);
+        }
+
+        listaFiltrada = new ListaDobleCircular<>();
+
+       if (!listaContactos.estaVacia()) {
+        NodoDobleCircular<Contacto> actual = listaContactos.cabeza;
+        do {
+            if (filtro.test(actual.dato)) {
+                listaFiltrada.agregar(actual.dato);
+            }
+            actual = actual.siguiente;
+        } while (actual != listaContactos.cabeza);
+    }
+
+        if (!listaFiltrada.estaVacia()) {
+            nodoActual = listaFiltrada.cabeza;
+            mostrarContacto(nodoActual.dato);
+            mostrarMensaje("Filtrado aplicado: " + entrada);
+        } else {
+            mostrarMensaje("No se encontraron contactos con ese criterio.");
+        }
     }
     
     @FXML
