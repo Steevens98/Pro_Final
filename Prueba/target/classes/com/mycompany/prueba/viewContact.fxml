@@ -2,19 +2,13 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.text.Text?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.prueba.ViewContactController">
-    <top>
-        <Text style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Vista de Contacto" textAlignment="CENTER" BorderPane.alignment="TOP_CENTER">
-         <BorderPane.margin>
-            <Insets top="10.0" />
-         </BorderPane.margin></Text>
-    </top>
+<BorderPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.mycompany.prueba.ViewContactController">
     
     <center>
         <VBox alignment="CENTER" spacing="10">
@@ -35,9 +29,29 @@
             </padding>
             <Button fx:id="btnAtras" text="Atrás" />
             <Button fx:id="btnEditar" text="Editar" />
-            <Button fx:id="btnEliminar" text="Eliminar" onAction="#eliminarContacto"/>
+            <Button fx:id="btnEliminar" onAction="#eliminarContacto" text="Eliminar" />
             <Button fx:id="btnSiguiente" text="Siguiente" />
             <Button fx:id="btnCancelar" onAction="#switchCancelar" text="Cancelar" />
         </HBox>
     </bottom>
+   <top>
+      <HBox prefHeight="34.0" prefWidth="590.0" BorderPane.alignment="CENTER">
+         <children>
+            <ComboBox fx:id="comboOrdenar" prefHeight="25.0" prefWidth="110.0" promptText="Ordenar por" />
+            <Button fx:id="btnOrdenar" mnemonicParsing="false" text="Ordenar">
+               <HBox.margin>
+                  <Insets left="10.0" />
+               </HBox.margin>
+            </Button>
+            <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Vista de Contacto">
+               <HBox.margin>
+                  <Insets left="35.0" />
+               </HBox.margin>
+            </Label>
+         </children>
+         <BorderPane.margin>
+            <Insets left="10.0" top="10.0" />
+         </BorderPane.margin>
+      </HBox>
+   </top>
 </BorderPane>

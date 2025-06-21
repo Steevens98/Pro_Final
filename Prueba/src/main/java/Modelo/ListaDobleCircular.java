@@ -1,5 +1,7 @@
 package Modelo;
 
+import java.util.Comparator;
+
 /**
  *
  * @author Usuario
@@ -58,46 +60,48 @@ public class ListaDobleCircular<T> {
     
     // Mostrar hacia adelante
     public void mostrarAdelante() {
-        
+
         if (cabeza == null) {
             System.out.println("Lista vacía");
             return;
         }
-        
+
         NodoDobleCircular<T> actual = cabeza;
-        
+
         do {
-            System.out.print(actual.dato +
-            " <-> ");
+            System.out.print(actual.dato
+                    + " <-> ");
             actual = actual.siguiente;
         } while (actual != cabeza);
         System.out.println("(vuelve al inicio)");
     }
-    
-     public boolean estaVacia() {
-    return cabeza == null;
-}
+
+    public boolean estaVacia() {
+        return cabeza == null;
+    }
+
     // Mostrar hacia atrás
     public void mostrarAtras() {
         if (cabeza == null) {
             System.out.println("Lista vacía");
             return;
         }
-        NodoDobleCircular<T> actual =
-        cabeza.anterior;
+        NodoDobleCircular<T> actual
+                = cabeza.anterior;
 
         do {
-            System.out.print(actual.dato +
-            " <-> ");
+            System.out.print(actual.dato
+                    + " <-> ");
             actual = actual.anterior;
         } while (actual != cabeza.anterior);
         System.out.println("(vuelve al final)");
     }
-    
+
     // Tamaño
     public int tamaño() {
-        if (cabeza == null)
+        if (cabeza == null) {
             return 0;
+        }
         int contador = 0;
         NodoDobleCircular<T> actual = cabeza;
         do {
@@ -106,8 +110,8 @@ public class ListaDobleCircular<T> {
         } while (actual != cabeza);
         return contador;
     }
-    
-     // Devuelve el nodo siguiente del nodo actual
+
+    // Devuelve el nodo siguiente del nodo actual
     public NodoDobleCircular<T> avanzar(NodoDobleCircular<T> actual) {
         if (actual != null) {
             return actual.siguiente;
@@ -122,7 +126,31 @@ public class ListaDobleCircular<T> {
         }
         return null;
     }
-
+    
+    public void ordenarPor(Comparator<T> comparador) {
+        if (cabeza == null || cabeza.siguiente == cabeza) {
+            return; // lista vacía o un nodo
+        }
+        System.out.println("Ejecutando ordenamiento"+ comparador); 
+        boolean cambio;
+        do {
+            cambio = false;
+            NodoDobleCircular<T> actual = cabeza;
+            boolean primeraVuelta = true;
+            while (actual.siguiente != cabeza || primeraVuelta) {
+                primeraVuelta = false;
+                NodoDobleCircular<T> siguiente = actual.siguiente;
+                if (comparador.compare(actual.dato, siguiente.dato) > 0) {
+                    T temp = actual.dato;
+                    actual.dato = siguiente.dato;
+                    siguiente.dato = temp;
+                    cambio = true;
+                }
+                actual = actual.siguiente;
+            }
+        } while (cambio);
+    }
+    
 }
 
 

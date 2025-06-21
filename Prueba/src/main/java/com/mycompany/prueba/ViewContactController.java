@@ -21,6 +21,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -29,6 +30,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -53,6 +55,10 @@ public class ViewContactController implements Initializable {
     private Button btnFotoSiguiente, btnFotoAnterior;
     @FXML
     private Button btnEliminar;
+    @FXML
+    private ComboBox<String> comboOrdenar;
+    @FXML
+    private Button btnOrdenar;
     
     private Button btnSeleccionarImagen = new Button("Seleccionar Imagen");
     private ImageView imgFoto;    
@@ -62,13 +68,18 @@ public class ViewContactController implements Initializable {
     private NodoDobleCircular<Foto> nodoFotoActual;
     private boolean modoEdicion = false;
     private ArrayList<TextField> camposActuales = new ArrayList<>(10);
-
+    private Comparator<Contacto> comparadorPorNombre = Comparator.comparing(
+            Contacto::getNombre, String.CASE_INSENSITIVE_ORDER);
+    private Comparator<Contacto> comparadorPorPais = Comparator.comparing(
+            c -> c.getPais() == null ? "" : c.getPais().trim(), // evita null y espacios
+            String.CASE_INSENSITIVE_ORDER);
+    private Comparator<Contacto> comparadorPorTipo = Comparator.comparing(
+            c -> (c instanceof PersonaNatural) ? "Persona" : "Empresa", String.CASE_INSENSITIVE_ORDER);
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
         listaContactos = Contacto.cargarContactos();
         Contacto.cargarFotos(listaContactos);
         if (!listaContactos.estaVacia()) {
@@ -81,6 +92,7 @@ public class ViewContactController implements Initializable {
             nodoActual = listaContactos.cabeza;
             mostrarContacto(nodoActual.dato);
         }
+        comboOrdenar.getItems().addAll("Nombre", "País", "Tipo de contacto");
         vboxContactos.setAlignment(Pos.CENTER);
         btnSeleccionarImagen.setVisible(false);
         btnSeleccionarImagen.setOnAction(e -> seleccionarImagen());
@@ -90,6 +102,17 @@ public class ViewContactController implements Initializable {
         btnEliminar.setOnAction(e -> eliminarContacto());
         btnFotoSiguiente.setOnAction(e -> mostrarFotoSiguiente());
         btnFotoAnterior.setOnAction(e -> mostrarFotoAnterior());
+        btnOrdenar.setOnAction(e -> ordenar());
+    }
+    
+    private void ordenar() {
+        String criterio = comboOrdenar.getValue();
+        if (criterio != null) {
+            ordenarContactos(criterio.toLowerCase());
+            mostrarMensaje("Contactos ordenados por " + criterio);
+        } else {
+            mostrarMensaje("Seleccione un criterio de ordenamiento");
+        }
     }
     
     private void mostrarFotoSiguiente() {
@@ -137,7 +160,7 @@ public class ViewContactController implements Initializable {
         VBox contenedor = new VBox(10);
         contenedor.setAlignment(Pos.CENTER);
         contenedor.setPadding(new Insets(10));
-
+   
         // Imagen + flechas laterales
         HBox hboxImagen = new HBox(10);
         hboxImagen.setAlignment(Pos.CENTER);
@@ -176,20 +199,6 @@ public class ViewContactController implements Initializable {
         vboxContactos.getChildren().add(contenedor);
     }
     
-//    private void cargarImagen(String ruta) {
-//        try {
-//            Image imagen;
-//            if (ruta.startsWith("/")) {
-//                imagen = new Image(getClass().getResourceAsStream(ruta));
-//            } else {
-//                imagen = new Image("file:" + ruta);
-//            }
-//            imgFoto.setImage(imagen);
-//        } catch (Exception e) {
-//            System.out.println("Error cargando imagen: " + ruta);
-//            imgFoto.setImage(null);
-//        }
-//    }
     private void cargarImagen(String rutaRelativa) {
         try {
             // Ruta relativa al directorio externo "imagenes"
@@ -431,6 +440,28 @@ public class ViewContactController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    
+    public void ordenarContactos(String criterio) {
+        Comparator<Contacto> comparador;
+        switch (criterio.toLowerCase()) {
+            case "nombre":
+                comparador = comparadorPorNombre;
+                break;
+            case "país":
+                comparador = comparadorPorPais;
+                break;
+            case "tipo de contacto":
+                comparador = comparadorPorTipo;
+                break;
+            default:
+                comparador = comparadorPorNombre;
+        }
+        System.out.println("Ordenando por: " + criterio);
+        listaContactos.ordenarPor(comparador);
+        nodoActual = listaContactos.cabeza;
+        mostrarContacto(nodoActual.dato);
     }
     
     @FXML
