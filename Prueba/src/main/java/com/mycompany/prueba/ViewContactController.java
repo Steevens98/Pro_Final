@@ -620,26 +620,33 @@ public class ViewContactController implements Initializable {
     
     @FXML
     private void verContactosAsociados() {
-        try {
-            // Cargar FXML de la vista de asociados
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/prueba/asociadosView.fxml"));
-            Parent root = loader.load();
-
-            // Obtener el controlador y pasarle la lista de asociados del contacto actual
-            AsociadosViewController controlador = loader.getController();
-            if (nodoActual != null && nodoActual.dato != null) {
-                ListaDobleCircular<Contacto> asociados = nodoActual.dato.getContactosAsociados();
-                controlador.setContactosAsociados(asociados);
+        if (nodoActual != null && nodoActual.dato != null) {
+            ListaDobleCircular<Contacto> asociados = nodoActual.dato.getContactosAsociados();
+            if (asociados == null || asociados.estaVacia()) {
+                mostrarMensaje("Este contacto no tiene contactos asociados.");
+                return;
             }
 
-            // Mostrar en nueva ventana
-            Stage stage = new Stage();
-            stage.setTitle("Contactos Asociados");
-            stage.setScene(new Scene(root));
-            stage.show();
+            try {
+                // Cargar FXML de la vista de asociados
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/prueba/asociadosView.fxml"));
+                Parent root = loader.load();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+                // Obtener el controlador y pasarle la lista de asociados
+                AsociadosViewController controlador = loader.getController();
+                controlador.setContactosAsociados(asociados);
+
+                // Mostrar en nueva ventana
+                Stage stage = new Stage();
+                stage.setTitle("Contactos Asociados");
+                stage.setScene(new Scene(root));
+                stage.show();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            mostrarMensaje("No hay un contacto seleccionado.");
         }
     }
 }
